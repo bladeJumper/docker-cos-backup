@@ -35,3 +35,9 @@ tar -zcvf $FILE_NAME $SOURCE
 # upload to cos
 coscmd -c /etc/cos/cos.conf upload $FILE_NAME $COS_FOLDER
 # coscmd -c ./cos.conf upload $FILE_NAME $COS_FOLDER
+
+# GOTIFY notification
+if [ -n "$WEBHOOK_URL" ]; then
+    echo "notifying ${WEBHOOK_URL}"
+    curl -m 10 --retry 5 $WEBHOOK_URL -F "title=Backup ${BACKUP_NAME}" -F "message=backup uploaded to cos"
+fi
