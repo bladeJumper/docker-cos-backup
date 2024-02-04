@@ -33,5 +33,5 @@ echo "creating archive"
 tar -zcvf $FILE_NAME $SOURCE
 
 # upload to cos
-# coscmd -c /etc/cos/cos.conf upload $FILE_NAME $COS_FOLDER
-coscmd -c ./cos.conf upload $FILE_NAME $COS_FOLDER
+coscmd -c /etc/cos/cos.conf upload $FILE_NAME $COS_FOLDER
+# coscmd -c ./cos.conf upload $FILE_NAME $COS_FOLDER
