@@ -37,6 +37,7 @@ then
     # archive data
     echo "creating archive"
     tar -zcvf $FILE_NAME_FULL $SOURCE
+    COMPRESSED_FILE_SIZE=$(( $( stat -c '%s' $FILE_NAME_FULL ) / 1024 / 1024 ))
 
     # upload to cos
     coscmd -c /etc/cos/cos.conf upload $FILE_NAME_FULL $COS_FOLDER
@@ -45,7 +46,7 @@ then
     # GOTIFY notification
     if [ -n "$WEBHOOK_URL" ]; then
         echo "notifying ${WEBHOOK_URL}"
-        curl -m 10 --retry 5 -X POST $WEBHOOK_URL -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"message\": \"backup uploaded to cos\",  \"title\": \"Backup ${FILE_NAME} uploaded to ${COS_FOLDER}\"}"
+        curl -m 10 --retry 5 -X POST $WEBHOOK_URL -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"message\": \"backup uploaded to cos\nUploaded size: ${COMPRESSED_FILE_SIZE} MB\",  \"title\": \"Backup ${FILE_NAME} uploaded to ${COS_FOLDER}\"}"
 
     fi
 fi
@@ -86,14 +87,18 @@ then
 
     # Dump DB & compress
     pg_dumpall -h $PG_HOST -U $PG_USERNAME > $FILE_NAME_FULL
+    RAW_FILE_SIZE=$(( $( stat -c '%s' $FILE_NAME_FULL ) / 1024 / 1024 ))
     tar -zcvf $FILE_NAME_FULL.tar.gz $FILE_NAME_FULL
+    COMPRESSED_FILE_SIZE=$(( $( stat -c '%s' $FILE_NAME_FULL.tar.gz ) / 1024 / 1024 ))
 
     # upload to cos
     coscmd -c /etc/cos/cos.conf upload $FILE_NAME_FULL.tar.gz $PG_COS_FOLDER
 
+    rm $FILE_NAME_FULL.tar.gz
+    rm $FILE_NAME_FULL
     # GOTIFY notification
     if [ -n "$WEBHOOK_URL" ]; then
         echo "notifying ${WEBHOOK_URL}"
-        curl -m 10 --retry 5 -X POST $WEBHOOK_URL -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"message\": \"postgresql backup uploaded to cos with pg_dumpall.\ndatabase host: ${PG_HOST}\",  \"title\": \"Database backup ${FILE_NAME} uploaded to folder ${PG_COS_FOLDER}\"}"
+        curl -m 10 --retry 5 -X POST $WEBHOOK_URL -H  "accept: application/json" -H "Content-Type: application/json" -d "{  \"message\": \"postgresql backup uploaded\ndatabase host: ${PG_HOST}\nRaw size: ${RAW_FILE_SIZE} MB\nUploaded size: ${COMPRESSED_FILE_SIZE} MB\",  \"title\": \"Database backup ${FILE_NAME} uploaded to folder ${PG_COS_FOLDER}\"}"
     fi
 fi
