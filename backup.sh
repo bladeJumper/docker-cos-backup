@@ -45,12 +45,14 @@ then
     # GOTIFY notification
     if [ -n "$WEBHOOK_URL" ]; then
         echo "notifying ${WEBHOOK_URL}"
-        curl -m 10 --retry 5 $WEBHOOK_URL -F "title=Backup ${FILE_NAME} uploaded to ${COS_FOLDER}" -F "message=backup uploaded to cos"
+        curl -m 10 --retry 5 -X POST $WEBHOOK_URL -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"message\": \"backup uploaded to cos\",  \"title\": \"Backup ${FILE_NAME} uploaded to ${COS_FOLDER}\"}"
+
     fi
 fi
 
 CUR_TIMESTAMP=`date "+%Y-%m-%d_%H-%M-%S"`
 if [[ -n "$BACKUP_PG" ]];
+then
     # check if Postgress target filename is set
     if [[ -z ${PG_COS_FILENAME} ]];
     then
@@ -82,12 +84,16 @@ if [[ -n "$BACKUP_PG" ]];
         echo "PG_COS_FOLDER env var is set as ${PG_COS_FOLDER}"
     fi
 
-    # Dump DB
-    pg_dumpall -f $FILE_NAME -U $PG_USERNAME -W $PG_PASSWORD -l $PG_GLOBAL_DB -h $PG_HOST -p $PG_PORT
-then
+    # Dump DB & compress
+    pg_dumpall -h $PG_HOST -U $PG_USERNAME > $FILE_NAME_FULL
+    tar -zcvf $FILE_NAME_FULL.tar.gz $FILE_NAME_FULL
+
+    # upload to cos
+    coscmd -c /etc/cos/cos.conf upload $FILE_NAME_FULL.tar.gz $PG_COS_FOLDER
+
     # GOTIFY notification
     if [ -n "$WEBHOOK_URL" ]; then
         echo "notifying ${WEBHOOK_URL}"
-        curl -m 10 --retry 5 $WEBHOOK_URL -F "title=Database backup ${FILE_NAME} uploaded to ${PG_COS_FOLDER}" -F "message=postgresql backup uploaded to cos with pg_dumpall.\ndatabase host: ${PG_HOST}"
+        curl -m 10 --retry 5 -X POST $WEBHOOK_URL -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"message\": \"postgresql backup uploaded to cos with pg_dumpall.\ndatabase host: ${PG_HOST}\",  \"title\": \"Database backup ${FILE_NAME} uploaded to folder ${PG_COS_FOLDER}\"}"
     fi
 fi

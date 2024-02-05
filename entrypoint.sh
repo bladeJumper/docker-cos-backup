@@ -10,7 +10,9 @@ if [ -n "$WEBHOOK_URL" ]; then
     fi
     if [ -n "$BACKUP_PG" ]; 
     then
-        curl -m 10 --retry 5 $WEBHOOK_URL -F "title=Database backup to ${PG_COS_FOLDER}${PG_COS_FILENAME} scheduled" -F "message=crontab: ${CRON_SCHEDULE}\ndatabase host: ${PG_HOST}"
+        echo "*:*:*:*:$PG_PASSWORD" > ~/.pgpass
+        chmod 0600 ~/.pgpass
+        curl -m 10 --retry 5 -X POST $WEBHOOK_URL -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"message\": \"crontab: ${CRON_SCHEDULE}\ndatabase host: ${PG_HOST}\",  \"title\": \"Database backup to ${PG_COS_FOLDER}${PG_COS_FILENAME} scheduled\"}"
     fi
 fi
 crond -f
