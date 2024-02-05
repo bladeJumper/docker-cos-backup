@@ -4,6 +4,7 @@ RUN pip install coscmd
 RUN apk update
 RUN apk add curl
 RUN apk add postgresql-client
+RUN apk add nano
 
 COPY entrypoint.sh /
 COPY backup.sh /
