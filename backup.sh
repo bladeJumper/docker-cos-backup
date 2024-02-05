@@ -39,5 +39,5 @@ coscmd -c /etc/cos/cos.conf upload $FILE_NAME $COS_FOLDER
 # GOTIFY notification
 if [ -n "$WEBHOOK_URL" ]; then
     echo "notifying ${WEBHOOK_URL}"
-    curl -m 10 --retry 5 $WEBHOOK_URL -F "title=Backup to ${BACKUP_NAME} uploaded" -F "message=backup uploaded to cos"
+    curl -m 10 --retry 5 $WEBHOOK_URL -F "title=Backup ${FILE_NAME} uploaded to ${COS_FOLDER}" -F "message=backup uploaded to cos"
 fi
